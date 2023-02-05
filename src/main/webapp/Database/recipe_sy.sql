@@ -1,0 +1,644 @@
+-- 230111 수정
+select * from recipe_page_view where subject like '%복숭아%';
+
+select * from ingTag where tag like '%고기%';
+select * from recipeTag where tag_id in(38,67);
+
+select * from 
+(select t.rnum, v.subject, v.thumbnail, v.nick, v.img, v.likes, v.views, v.time  
+from recipeTag t, recipe_page_view v where t.rnum = v.rnum) 
+where tag_id = 6;
+select * from (select * from recipeTag inner join recipe_page_view on recipeTag.rnum = recipe_page_view.rnum) 
+where tag_id = 6;
+select rnum, subject, thumbnail, nick, img, likes, views, time  from (select * from recipeTag inner join recipe_page_view on recipeTag.rnum = recipe_page_view.rnum) 
+where tag_id = 6;
+
+select r.* from 
+(select * from recipeTag t, recipe_page_view v, ingTag i 
+where t.rnum = v.rnum and t.tag_id = i.tag_id) r 
+where r.tag = '소금';
+
+select r.* from 
+(select t.*, v.*, i.*, i.tag as tagName from recipeTag t, recipe_page_view v, ingTag i 
+where t.rnum = v.rnum and t.tag_id = i.tag_id) r 
+where tagName = '소금';
+
+-- 성공
+select distinct t.rnum, v.subject, v.thumbnail, v.nick, v.img, v.likes, v.views, v.time from recipeTag t, recipe_page_view v, ingTag i 
+where t.rnum = v.rnum and t.tag_id = i.tag_id and i.tag like '%고기%';
+
+-- 서브쿼리가 복수의 결과를 리턴하기 때문에 실패
+select * from recipe_page_view where rnum = (select rnum from recipeTag where tag_id = (select tag_id from ingTag where tag like '소금'));
+
+-- 230109 수정
+select * from recipe;
+select * from processImg;
+UPDATE recipe SET thumbnail = REPLACE(thumbnail, 'imageThumb', 'imageRecipe');
+UPDATE processImg SET links = REPLACE(links, 'imageThumb', 'imageRecipe');
+-- ingTag, recipeTag에 11번 레시피 관련 레코드 삽입
+insert into ingTag(tag_id, tag) values(ingTag_seq.nextVal, '콩비지');
+insert into recipeTag(rnum, tag_id, quantity) values(11, 38, '150g');
+insert into recipeTag(rnum, tag_id, quantity) values(11, 23, '약간');
+insert into recipeTag(rnum, tag_id, quantity) values(11, 47, '300g');
+select * from ingTag;
+select * from recipeTag;
+select ingTag_seq.nextVal from dual;
+select * from recipe_page;
+select * from recipe_page_view;
+select * from members;
+update members set phone='010-1111-1111' where id='scott';
+
+/* Drop Triggers */
+
+DROP TRIGGER TRI_favorite_fnum;
+DROP TRIGGER TRI_interest_interestnum;
+DROP TRIGGER TRI_qna_qseq;
+DROP TRIGGER TRI_recipe_rnum;
+DROP TRIGGER TRI_reply_replyseq;
+
+select * from tabs;
+delete from recipe where rnum = 2;
+select recipe_seq.nextVal from dual;
+
+/* Drop Tables */
+
+DROP TABLE admins CASCADE CONSTRAINTS;
+DROP TABLE favorite CASCADE CONSTRAINTS;
+DROP TABLE recipeTag CASCADE CONSTRAINTS;
+DROP TABLE ingTag CASCADE CONSTRAINTS;
+DROP TABLE interest CASCADE CONSTRAINTS;
+DROP TABLE qna CASCADE CONSTRAINTS;
+DROP TABLE processImg CASCADE CONSTRAINTS;
+DROP TABLE recipe_page CASCADE CONSTRAINTS;
+DROP TABLE reply CASCADE CONSTRAINTS;
+DROP TABLE recipe CASCADE CONSTRAINTS;
+DROP TABLE members CASCADE CONSTRAINTS;
+
+
+
+/* Drop Sequences */
+
+DROP SEQUENCE SEQ_favorite_fnum;
+DROP SEQUENCE SEQ_interest_interestnum;
+DROP SEQUENCE SEQ_qna_qseq;
+DROP SEQUENCE SEQ_recipe_rnum;
+DROP SEQUENCE SEQ_reply_replyseq;
+drop sequence SEQ_ingTag_tag_id;
+drop sequence recipe_seq;
+drop sequence ingTag_seq;
+
+
+/* Create Sequences */
+
+CREATE SEQUENCE SEQ_favorite_fnum INCREMENT BY 1 START WITH 1;
+CREATE SEQUENCE SEQ_interest_interestnum INCREMENT BY 1 START WITH 1;
+CREATE SEQUENCE SEQ_qna_qseq INCREMENT BY 1 START WITH 1;
+CREATE SEQUENCE SEQ_recipe_rnum INCREMENT BY 1 START WITH 1;
+CREATE SEQUENCE SEQ_reply_replyseq INCREMENT BY 1 START WITH 1;
+create sequence SEQ_ingTag_tag_id start with 1 increment by 1;
+
+-- 수정본
+create sequence recipe_seq increment by 1 start with 1;
+create sequence recipe_page_seq increment by 1 start with 1;
+create sequence qseq_seq increment by 1 start with 1;
+create sequence reply_seq increment by 1 start with 1;
+CREATE SEQUENCE fnum_seq INCREMENT BY 1 START WITH 1;
+CREATE SEQUENCE interestnum_seq INCREMENT BY 1 START WITH 1;
+create sequence ingTag_seq start with 47 increment by 1;
+
+/* Create Tables */
+
+CREATE TABLE admins
+(
+	aid varchar2(50) NOT NULL,
+	pwd varchar2(50) NOT NULL,
+	phone varchar2(50) NOT NULL,
+	PRIMARY KEY (aid)
+);
+
+
+CREATE TABLE favorite
+(
+	fnum number(5) NOT NULL,
+	id varchar2(50) NOT NULL,
+	rnum number(20) NOT NULL,
+	PRIMARY KEY (fnum)
+);
+
+
+CREATE TABLE ingTag
+(
+	tag_id number(20) NOT NULL,
+	tag varchar2(100) NOT NULL UNIQUE,
+	PRIMARY KEY (tag_id)
+);
+
+
+CREATE TABLE interest
+(
+	interestnum number(5) NOT NULL,
+	id varchar2(50) NOT NULL,
+	rnum number(20) NOT NULL,
+	likeYN char(1) DEFAULT 'N',
+	PRIMARY KEY (interestnum)
+);
+
+
+CREATE TABLE members
+(
+	id varchar2(50) NOT NULL,
+	pwd varchar2(50) NOT NULL,
+	name varchar2(20) NOT NULL,
+	phone varchar2(20) NOT NULL,
+	email varchar2(50) NOT NULL,
+	nick varchar2(50) NOT NULL,
+	address1 varchar2(100) NOT NULL,
+	address2 varchar2(100),
+	zip_num varchar2(10) NOT NULL,
+	indate date DEFAULT sysdate,
+	img varchar2(1000),
+	useyn char(1) DEFAULT 'Y',
+	PRIMARY KEY (id)
+);
+
+
+CREATE TABLE processImg
+(
+	iseq number(5) NOT NULL,
+	rnum number(20) NOT NULL,
+	links varchar2(1000) NOT NULL,
+	description varchar2(1000) NOT NULL
+);
+
+
+CREATE TABLE qna
+(
+	qseq number(5) NOT NULL,
+	id varchar2(50) NOT NULL,
+	qsubject varchar2(200) NOT NULL,
+	qcontent varchar2(1000) NOT NULL,
+	qnadate date DEFAULT sysdate,
+	secret char(1) DEFAULT '0' NOT NULL,
+	qnapass varchar2(100),
+	replyQna varchar2(1000),
+	rep number(1) DEFAULT 1,
+	PRIMARY KEY (qseq)
+);
+
+
+CREATE TABLE recipe
+(
+	rnum number(20) NOT NULL,
+	id varchar2(50) NOT NULL,
+	subject varchar2(100) NOT NULL,
+	content varchar2(1000) NOT NULL,
+	thumbnail varchar2(500) NOT NULL,
+	indate date DEFAULT sysdate,
+	time number(5) NOT NULL,
+	type number(5) DEFAULT 0,
+	theme number(5) DEFAULT 0,
+	PRIMARY KEY (rnum)
+);
+
+
+CREATE TABLE recipeTag
+(
+	rnum number(20) NOT NULL,
+	tag_id number(20) NOT NULL,
+	quantity varchar2(50)
+);
+
+
+CREATE TABLE recipe_page
+(
+	rnum number(20) NOT NULL,
+	views number(10) DEFAULT 0 NOT NULL,
+	likes number(10) DEFAULT 0,
+	ing number(5) DEFAULT 0,
+	rec number(5) DEFAULT 0,
+	report number(5) DEFAULT 0
+);
+
+
+CREATE TABLE reply
+(
+	replyseq number(5) NOT NULL,
+	id varchar2(50) NOT NULL,
+	rnum number(20) NOT NULL,
+	content varchar2(1000) NOT NULL,
+	replydate date DEFAULT sysdate,
+	PRIMARY KEY (replyseq)
+);
+
+
+
+/* Create Foreign Keys */
+
+ALTER TABLE recipeTag
+	ADD FOREIGN KEY (tag_id)
+	REFERENCES ingTag (tag_id)
+;
+
+
+ALTER TABLE favorite
+	ADD FOREIGN KEY (id)
+	REFERENCES members (id)
+;
+
+
+ALTER TABLE interest
+	ADD FOREIGN KEY (id)
+	REFERENCES members (id)
+;
+
+
+ALTER TABLE qna
+	ADD FOREIGN KEY (id)
+	REFERENCES members (id)
+;
+
+
+ALTER TABLE recipe
+	ADD FOREIGN KEY (id)
+	REFERENCES members (id)
+;
+
+
+ALTER TABLE reply
+	ADD FOREIGN KEY (id)
+	REFERENCES members (id)
+;
+
+
+ALTER TABLE favorite
+	ADD FOREIGN KEY (rnum)
+	REFERENCES recipe (rnum)
+;
+
+
+ALTER TABLE interest
+	ADD FOREIGN KEY (rnum)
+	REFERENCES recipe (rnum)
+;
+
+
+ALTER TABLE processImg
+	ADD FOREIGN KEY (rnum)
+	REFERENCES recipe (rnum)
+;
+
+
+ALTER TABLE recipeTag
+	ADD FOREIGN KEY (rnum)
+	REFERENCES recipe (rnum)
+;
+
+
+ALTER TABLE recipe_page
+	ADD FOREIGN KEY (rnum)
+	REFERENCES recipe (rnum)
+;
+
+
+ALTER TABLE reply
+	ADD FOREIGN KEY (rnum)
+	REFERENCES recipe (rnum)
+;
+
+
+
+/* Create Triggers */
+
+CREATE OR REPLACE TRIGGER TRI_favorite_fnum BEFORE INSERT ON favorite
+FOR EACH ROW
+BEGIN
+	SELECT SEQ_favorite_fnum.nextval
+	INTO :new.fnum
+	FROM dual;
+END;
+
+/
+
+CREATE OR REPLACE TRIGGER TRI_interest_interestnum BEFORE INSERT ON interest
+FOR EACH ROW
+BEGIN
+	SELECT SEQ_interest_interestnum.nextval
+	INTO :new.interestnum
+	FROM dual;
+END;
+
+/
+
+CREATE OR REPLACE TRIGGER TRI_qna_qseq BEFORE INSERT ON qna
+FOR EACH ROW
+BEGIN
+	SELECT SEQ_qna_qseq.nextval
+	INTO :new.qseq
+	FROM dual;
+END;
+
+/
+
+CREATE OR REPLACE TRIGGER TRI_recipe_rnum BEFORE INSERT ON recipe
+FOR EACH ROW
+BEGIN
+	SELECT SEQ_recipe_rnum.nextval
+	INTO :new.rnum
+	FROM dual;
+END;
+
+/
+
+CREATE OR REPLACE TRIGGER TRI_reply_replyseq BEFORE INSERT ON reply
+FOR EACH ROW
+BEGIN
+	SELECT SEQ_reply_replyseq.nextval
+	INTO :new.replyseq
+	FROM dual;
+END;
+
+/
+
+select * from recipe order by rnum asc;
+select * from processImg;
+select * from ingTag;
+select * from recipeTag;
+-- **** 이미지들 imageRecipe에서 imageThumb로 옮기기
+-- 1번 레시피
+insert into recipe(rnum, id, subject, content, time, type, thumbnail) 
+values(recipe_seq.nextVal, 'scott', '복숭아 코블러', '지금 한창 제철인 천도복숭아를 활용하여 만드는 상큼한 디저트 메뉴!', 60, 6 , 'imageRecipe/peachThumb.jpg');
+insert into processImg(rnum, links, description, iseq) values( 1, 'imageRecipe/peach1.jpg', '복숭아는 씨를 제거하고 적당한 크기로 썬다.', 1);
+insert into processImg(rnum, links, description, iseq) values( 1, 'imageRecipe/peach2.jpg', '볼에 복숭아, 설탕, 계피 가루를 넣고 섞어 절인다.', 2);
+insert into processImg(rnum, links, description, iseq) values( 1, 'imageRecipe/peach3.jpg', '다른 볼에 중력분, 설탕, 베이킹파우더, 소금, 우유를 넣고 섞는다.', 3);
+insert into processImg(rnum, links, description, iseq) values( 1, 'imageRecipe/peach4.jpg', '오븐 용기에 버터를 넣고 전자레인지에 돌려 녹인다.', 4);
+insert into processImg(rnum, links, description, iseq) values( 1, 'imageRecipe/peach5.jpg', '에어프라이어에 넣고 160℃에서 30분 굽는다.', 5);
+-- 재료 : 천도복숭아 2개, 설탕 3숟가락, 계피가루 1/3숟가락, 중력분 80g, 설탕 70g, 베이킹파우더 약간, 소금 약간, 우유 2/3종이컵, 버터 40g
+insert into recipeTag(tag_id, rnum, quantity) values(1, 1, '2개');
+insert into recipeTag(tag_id, rnum, quantity) values(2, 1, '3스푼');
+insert into recipeTag(tag_id, rnum, quantity) values(3, 1, '1/3스푼');
+insert into recipeTag(tag_id, rnum, quantity) values(4, 1, '80g');
+insert into recipeTag(tag_id, rnum, quantity) values(5, 1, '약간');
+insert into recipeTag(tag_id, rnum, quantity) values(6, 1, '약간');
+insert into recipeTag(tag_id, rnum, quantity) values(7, 1, '2/3종이컵');
+insert into recipeTag(tag_id, rnum, quantity) values(8, 1, '40g');
+-- 2번 레시피
+insert into recipe(rnum, id, subject, content, time, type, thumbnail) 
+values(recipe_seq.nextVal, 'scott', '앙쿠르트 스프', '스프를 컵에 담고 그위에 페이스트리 반죽을 덮어서 오븐에 바삭하게 구운 음식', 60, 4 , 'imageRecipe/piesoupThumb.jpg');
+insert into processImg(rnum, links, description, iseq) values( 2, 'imageRecipe/piesoup1.jpg', '양파는 채썰고 감자는 슬라이스한다. 냄비에 버터를 녹이고 양파를 충분히 볶는다', 1);
+insert into processImg(rnum, links, description, iseq) values( 2, 'imageRecipe/piesoup2.jpg', '감자를 넣고 함께 볶다가 물, 치킨스톡을 넣고 끓인다.', 2);
+insert into processImg(rnum, links, description, iseq) values( 2, 'imageRecipe/piesoup3.jpg', '감자가 익으면 핸드블렌더로 갈아준다.', 3);
+insert into processImg(rnum, links, description, iseq) values( 2, 'imageRecipe/piesoup4.jpg', '생크림을 넣고 약불에서 끓여 농도를 맞춘다. 소금, 후추로 간 한다.오븐 용기에 담고 페이스트리 생지로 용기를 덮는다', 4);
+insert into processImg(rnum, links, description, iseq) values( 2, 'imageRecipe/piesoup5.jpg', '오븐에 넣고 170℃에서 15분 굽는다.', 5);
+-- 재료 : 감자 2개, 양파 1/2개, 버터 1조각, 물 2종이컵,  생크림 1/2종이컵, 치킨스톡 큐브 1개, 소금 약간, 후추 약간, 페이스트리생지 1장, 달걀 1개
+insert into recipeTag(tag_id, rnum, quantity) values(9, 2, '2개');
+insert into recipeTag(tag_id, rnum, quantity) values(10, 2, '1/2개');
+insert into recipeTag(tag_id, rnum, quantity) values(8, 2, '1조각');
+insert into recipeTag(tag_id, rnum, quantity) values(11, 2, '2종이컵');
+insert into recipeTag(tag_id, rnum, quantity) values(12, 2, '1/2종이컵');
+insert into recipeTag(tag_id, rnum, quantity) values(13, 2, '1개');
+insert into recipeTag(tag_id, rnum, quantity) values(6, 2, '약간');
+insert into recipeTag(tag_id, rnum, quantity) values(14, 2, '약간');
+insert into recipeTag(tag_id, rnum, quantity) values(15, 2, '1장');
+insert into recipeTag(tag_id, rnum, quantity) values(16, 2, '1개');
+-- 3번 레시피
+insert into recipe(rnum, id, subject, content, time, type, thumbnail) 
+values(recipe_seq.nextVal, 'scott', '미역된장국', '집에 국 없을 때 미역, 두부 넣어 간단하게 만드는 국, 미역된장국 만드는 법', 30, 2 , 'imageRecipe/swsoupThumb.jpg');
+insert into processImg(rnum, links, description, iseq) values( 3, 'imageRecipe/swsoup1.jpg', '미역은 물에 불리고 두부는 한입 크기로 썬다. 냄비에 불린 미역, 참기름, 국간장을 넣고 약한 불로 볶는다.', 1);
+insert into processImg(rnum, links, description, iseq) values( 3, 'imageRecipe/swsoup2.jpg', '다시물을 붓고 된장을 풀어주면서 끓인다.', 2);
+insert into processImg(rnum, links, description, iseq) values( 3, 'imageRecipe/swsoup3.jpg', '한소끔 끓인 국에 다진마늘과 두부를 넣고 한번 더 끓인다.', 3);
+-- 재료 : 자른미역 10g, 두부 1/2모, 다시물 1L, 된장 1숟가락, 참기름 1숟가락, 국간장 1숟가락, 다진마늘 1/2숟가락
+insert into recipeTag(tag_id, rnum, quantity) values(17, 3, '10g');
+insert into recipeTag(tag_id, rnum, quantity) values(18, 3, '1/2모');
+insert into recipeTag(tag_id, rnum, quantity) values(19, 3, '1L');
+insert into recipeTag(tag_id, rnum, quantity) values(20, 3, '1숟가락');
+insert into recipeTag(tag_id, rnum, quantity) values(21, 3, '1숟가락');
+insert into recipeTag(tag_id, rnum, quantity) values(22, 3, '1숟가락');
+insert into recipeTag(tag_id, rnum, quantity) values(23, 3, '1/2숟가락');
+-- 4번 레시피
+insert into recipe(rnum, id, subject, content, time, type, thumbnail) 
+values(recipe_seq.nextVal, 'scott', '알배기배추무침', '반찬 없을때 간단히 만드는 알배기배추 요리', 15, 3 , 'imageRecipe/cabbageThumb.jpg');
+insert into processImg(rnum, links, description, iseq) values( 4, 'imageRecipe/cabbage1.jpg', '끓는 물에 소금을 넣고 배추를 데친다', 1);
+insert into processImg(rnum, links, description, iseq) values( 4, 'imageRecipe/cabbage2.jpg', '찬물에 헹군 후 물기를 짜고 먹기 좋은 크기로 썬다.', 2);
+insert into processImg(rnum, links, description, iseq) values( 4, 'imageRecipe/cabbage3.jpg', '쪽파는 3~4cm 길이로 썬다.', 3);
+insert into processImg(rnum, links, description, iseq) values( 4, 'imageRecipe/cabbage4.jpg', '볼에 양념재료를 모두 넣고 섞는다.', 4);
+insert into processImg(rnum, links, description, iseq) values( 4, 'imageRecipe/cabbage5.jpg', '알배추, 쪽파에 양념을 넣고 무친 후 통깨를 뿌려 완성한다.', 5);
+-- 재료 : 알배추 300g, 소금 1/2숟가락, 쪽파 2줄, 통깨 약간, 된장 1+1/2숟가락, 고춧가루 1/2숟가락, 매실액 1/3숟가락, 다진마늘 1/2숟가락, 참기름 1숟가락
+insert into recipeTag(tag_id, rnum, quantity) values(24, 4, '300g');
+insert into recipeTag(tag_id, rnum, quantity) values(6, 4, '1/2숟가락');
+insert into recipeTag(tag_id, rnum, quantity) values(25, 4, '2줄');
+insert into recipeTag(tag_id, rnum, quantity) values(26, 4, '약간');
+insert into recipeTag(tag_id, rnum, quantity) values(20, 4, '1.5스푼');
+insert into recipeTag(tag_id, rnum, quantity) values(27, 4, '1/2숟가락');
+insert into recipeTag(tag_id, rnum, quantity) values(28, 4, '1/3숟가락');
+insert into recipeTag(tag_id, rnum, quantity) values(23, 4, '1/2숟가락');
+-- 5번 레시피
+insert into recipe(rnum, id, subject, content, time, type, thumbnail) 
+values(recipe_seq.nextVal, 'scott', '바지락야채죽', '봄 제철 식재료로 만드는 요리!바지락야채죽', 30, 1 , 'imageRecipe/clamThumb.jpg');
+insert into processImg(rnum, links, description, iseq) values( 5, 'imageRecipe/clam1.jpg', '끓는 물에 소금을 넣고 배추를 데친다', 1);
+insert into processImg(rnum, links, description, iseq) values( 5, 'imageRecipe/clam2.jpg', '찬물에 헹군 후 물기를 짜고 먹기 좋은 크기로 썬다.', 2);
+insert into processImg(rnum, links, description, iseq) values( 5, 'imageRecipe/clam3.jpg', '쪽파는 3~4cm 길이로 썬다.', 3);
+insert into processImg(rnum, links, description, iseq) values( 5, 'imageRecipe/clam4.jpg', '볼에 양념재료를 모두 넣고 섞는다.', 4);
+insert into processImg(rnum, links, description, iseq) values( 5, 'imageRecipe/clam5.jpg', '알배추, 쪽파에 양념을 넣고 무친 후 통깨를 뿌려 완성한다.', 5);
+-- 재료 : 쌀 1종이컵, 바지락살 1종이컵, 부추 30g, 양파 1/3개, 당근 1/4개, 소금 약간, 참기름 1숟가락, 물 4종이컵
+insert into recipeTag(tag_id, rnum, quantity) values(29, 5, '1종이컵');
+insert into recipeTag(tag_id, rnum, quantity) values(30, 5, '1종이컵');
+insert into recipeTag(tag_id, rnum, quantity) values(31, 5, '30g');
+insert into recipeTag(tag_id, rnum, quantity) values(10, 5, '1/3개');
+insert into recipeTag(tag_id, rnum, quantity) values(32, 5, '1/4개');
+insert into recipeTag(tag_id, rnum, quantity) values(6, 5, '약간');
+insert into recipeTag(tag_id, rnum, quantity) values(21, 5, '1숟가락');
+insert into recipeTag(tag_id, rnum, quantity) values(11, 5, '4종이컵');
+-- 6번 레시피
+insert into recipe(rnum, id, subject, content, time, type, thumbnail) 
+values(recipe_seq.nextVal, 'somi', '믹스베리레몬에이드', '더위를 잊게 해줄 상큼한 음료 한 잔~ 과일티백으로 만드는 믹스베리레몬에이드 레시피를 소개해드릴게요.', 20, 5 , 'imageRecipe/lemonadeThumb.jpg');
+insert into processImg(rnum, links, description, iseq) values( 6, 'imageRecipe/lemonade1.jpg', '믹스베리 티백을 따뜻한 물에 진하게 우린다.', 1);
+insert into processImg(rnum, links, description, iseq) values( 6, 'imageRecipe/lemonade2.jpg', '레몬은 즙을 짜서 믹스베리 티 우린 것과 섞는다.', 2);
+insert into processImg(rnum, links, description, iseq) values( 6, 'imageRecipe/lemonade3.jpg', '컵에 코코넛 젤리>얼음>사이다를 넣고 2를 넣는다.', 3);
+insert into processImg(rnum, links, description, iseq) values( 6, 'imageRecipe/lemonade4.jpg', '동결건조베리를 토핑으로 올려 완성한다.', 4);
+-- 재료 : 레몬 2개, 사이다 300ml, 믹스베리 티 2개, 따뜻한물 50ml, 코코넛 젤리 1숟가락, 동결건조베리 적당량
+insert into recipeTag(tag_id, rnum, quantity) values(33, 6, '2개');
+insert into recipeTag(tag_id, rnum, quantity) values(34, 6, '300ml');
+insert into recipeTag(tag_id, rnum, quantity) values(35, 6, '2개');
+insert into recipeTag(tag_id, rnum, quantity) values(11, 6, '50ml');
+insert into recipeTag(tag_id, rnum, quantity) values(36, 6, '1숟가락');
+insert into recipeTag(tag_id, rnum, quantity) values(37, 6, '적당량');
+-- 7번 레시피 
+insert into recipe(rnum, id, subject, content, time, type, thumbnail) 
+values(recipe_seq.nextVal, 'somi', '마제소바', '다진 고기를 볶아서 비벼먹는 일본식 비빔면!', 30, 4 , 'imageRecipe/majesobaThumb.jpg');
+insert into processImg(rnum, links, description, iseq) values( 7, 'imageRecipe/majesoba1.png', '[맛간장] 냄비에 맛간장 재료를 넣고 한소끔 끓인 다음 불을 끄고 가쓰오부시를 넣어요.', 1);
+insert into processImg(rnum, links, description, iseq) values( 7, 'imageRecipe/majesoba2.png', '부추와 쪽파는 쫑쫑 썰어 담고 팬에 고추기름, 다진마늘, 돼지고기 다짐육을 넣고 볶다가 양념을 넣고 자작하게 볶아요.', 2);
+insert into processImg(rnum, links, description, iseq) values( 7, 'imageRecipe/majesoba3.png', '끓는 물에 면을 삶고 찬물에 헹궈요.', 3);
+insert into processImg(rnum, links, description, iseq) values( 7, 'imageRecipe/majesoba4.png', '면에 맛간장 3숟가락, 고추기름 2숟가락을 넣고 비벼준 다음 그릇에 담아요.', 4);
+insert into processImg(rnum, links, description, iseq) values( 7, 'imageRecipe/majesoba5.png', '부추, 파, 김, 다진마늘, 산초가루, 볶아둔 고기를 담고 달걀노른자를 올려 마무리해요.', 5);
+-- 재료 : 돼지고기다짐육 2종이컵, 부추 1줌, 쪽파 1줌, 다진마늘 1숟가락, 우동면 2인분, 김가루 약간, 산초가루 약간, 달걀노른자 2개 [맛간장] 간장 1/2종이컵, 맛술 1/2종이컵, 다시마 2조각, 설탕 2숟가락, 가쓰오부시 1/2종이컵 [고기양념] 고추기름 1숟가락, 다진마늘 1숟가락, 굴소스 2숟가락, 맛간장 2숟가락, 두반장 1+1/2숟가락, 설탕 1숟가락, 맛술 2숟가락, 후추 약간 [다시마식초] 다시마 1조각, 식초 1/2종이컵, 설탕 1숟가락
+insert into recipeTag(tag_id, rnum, quantity) values(38, 7, '2종이컵');
+insert into recipeTag(tag_id, rnum, quantity) values(31, 7, '1줌');
+insert into recipeTag(tag_id, rnum, quantity) values(25, 7, '1줌');
+insert into recipeTag(tag_id, rnum, quantity) values(23, 7, '1숟가락');
+insert into recipeTag(tag_id, rnum, quantity) values(39, 7, '2인분');
+insert into recipeTag(tag_id, rnum, quantity) values(40, 7, '2개');
+insert into recipeTag(tag_id, rnum, quantity) values(41, 7, '3숟가락');
+insert into recipeTag(tag_id, rnum, quantity) values(2, 7, '1숟가락');
+-- 8번 레시피
+insert into recipe(rnum, id, subject, content, time, type, thumbnail) 
+values(recipe_seq.nextVal, 'somi', '오이고추 된장무침', '불 없이 간단하게 만들어 여름에 시원하고 아삭하게  즐길 수 있는 국민 밥반찬 메뉴!', 5, 3 , 'imageRecipe/cucumberThumb.jpg');
+insert into processImg(rnum, links, description, iseq) values( 8, 'imageRecipe/cucumber1.png', '오이고추를 먹기 좋은 크기로 자른다.', 1);
+insert into processImg(rnum, links, description, iseq) values( 8, 'imageRecipe/cucumber2.png', '양념 재료를 섞는다.', 2);
+insert into processImg(rnum, links, description, iseq) values( 8, 'imageRecipe/cucumber3.png', '오이고추와 양념을 버무린다.', 3);
+-- 재료 : 오이고추 100g [양념재료] 된장 1숟가락, 고추장 1/3숟가락, 마늘 1/2숟가락, 올리고당 1/2숟가락, 마요네즈 1숟가락, 깨소금 1/3숟가락
+
+-- 9번 레시피
+insert into recipe(rnum, id, subject, content, time, type, thumbnail) 
+values(recipe_seq.nextVal, 'somi', '레몬블루베리팬케이크', '브런치 메뉴 추천 촉촉하고 새콤달콤한 레몬 블루베리 팬케이크', 30, 6 , 'imageRecipe/pancakeThumb.jpg');
+insert into processImg(rnum, links, description, iseq) values( 9, 'imageRecipe/pancake1.png', '냄비에 레몬 블루베리 콩포트 재료를 모두 넣고 저어가며 졸여요. 우유에 레몬즙을 넣어서 버터 밀크를 만들어요.', 1);
+insert into processImg(rnum, links, description, iseq) values( 9, 'imageRecipe/pancake2.png', '부추와 쪽파는 쫑쫑 썰어 담고 팬에 고추기름, 다진마늘, 돼지고기 다짐육을 넣고 볶다가 양념을 넣고 자작하게 볶아요.', 2);
+insert into processImg(rnum, links, description, iseq) values( 9, 'imageRecipe/pancake3.png', '볼에 가루 재료를 모두 넣고 섞은 다음 달걀, 버터 밀크, 녹인 버터를 넣고 섞어요.', 3);
+insert into processImg(rnum, links, description, iseq) values( 9, 'imageRecipe/pancake4.png', '블루베리를 넣고 가볍게 섞은 다음 팬에 오일을 두르고 반죽을 올려 앞뒤로 노릇하게 구워요.', 4);
+-- 재료 : 밀가루중력분 2종이컵, 설탕 2+1/2숟가락, 베이킹파우더 2/3숟가락, 베이킹소다 1/4숟가락, 소금 1/3숟가락, 달걀 2개, 우유 180ml, 레몬즙 1숟가락, 녹인 무염버터 3숟가락, 블루베리 1종이컵, 오일 적당량 [레몬 블루베리 콩포트]​ 냉동 블루베리 2종이컵, 설탕 2/3종이컵, 레몬제스트 1숟가락, 레몬즙 3숟가락
+
+-- 10번 레시피
+insert into recipe(rnum, id, subject, content, time, type, thumbnail) 
+values(recipe_seq.nextVal, 'somi', '들깨떡만두국', '저는 버섯 잔뜩 넣은 들깨수제비를 정말 좋아해요! 먹으면서 떡사리와 만두를 넣으면더 든든하고 맛있겠다! 싶어서 만들어 본 레시피!', 20, 2 , 'imageRecipe/sesameThumb.jpg');
+insert into processImg(rnum, links, description, iseq) values( 10, 'imageRecipe/sesame1.jpg', '건표고버섯은 물에 불린 다음 얇게 썰고 대파는 어슷 썰어요.', 1);
+insert into processImg(rnum, links, description, iseq) values( 10, 'imageRecipe/sesame2.jpg', '냄비에 건표고버섯 불린 물 500ml, 생수 500ml, 만개한알을 넣고 끓여요.', 2);
+insert into processImg(rnum, links, description, iseq) values( 10, 'imageRecipe/sesame3.jpg', '떡국떡, 만두, 건표고버섯을 넣고 끓인 다음 국간장, 다진마늘을 넣고 끓여요.', 3);
+insert into processImg(rnum, links, description, iseq) values( 10, 'imageRecipe/sesame4.jpg', '대파, 후추를 넣고 끓여요. 들깨가루, 들기름을 넣은 다음 그릇에 담고 실고추를 올려 완성해요.', 4);
+-- 재료 : 만두 6개, 떡국떡 2종이컵, 건표고버섯 4개, 대파 1/3대, 만개한알 2개, 국간장 1숟가락, 다진마늘 1/3숟가락, 후추 약간, 들깨가루 4숟가락, 들기름 1숟가락, 실고추 약간
+
+-- 11번 레시피
+insert into recipe(rnum, id, subject, content, time, type, thumbnail) 
+values(recipe_seq.nextVal, 'scott', '크림치즈떡', '쫀득한 식감에 크림치즈의 진한 풍미와 고소한 콩가루가 합쳐진 너무 쉬운 간식메뉴에요', 20, 6 , 'imageRecipe/mochiThumb.jpg');
+-- 재료 : 크림치즈 200g, 우유 200g, 전분 6숟가락, 설탕 4숟가락, 식초 2숟가락
+
+-- 12번 레시피
+insert into recipe(rnum, id, subject, content, time, type, thumbnail) 
+values(recipe_seq.nextVal, 'scott', '마늘쫑파스타', '제철 마늘쫑으로 고소한 건새우와 굴소스를 넣어 감칠맛을 살린 파스타를 만들어봤어요', 30, 4 , 'imageRecipe/garlicpastaThumb.jpg');
+-- 재료 : 파스타면 2인분, 마늘종 10줄, 비엔나소시지 10개, 건새우 15g, 마늘 5알, 간장 1숟가락, 굴소스 2숟가락, 페페론치노 4개, 소금 약간, 후추 약간, 올리브유 2숟가락
+
+-- 13번 레시피
+insert into recipe(rnum, id, subject, content, time, type, thumbnail) 
+values(recipe_seq.nextVal, 'scott', '스리라차목살필라프', '도톰한 돼지고기 목살과 매콤 칠리소스로 맛을 낸 필라프 레시피를 소개해드릴게요', 30, 4 , 'imageRecipe/srirachaThumb.jpg');
+-- 재료 : 돼지고기목살 150g, 양파 1/4개, 당근 1/4개, 마늘 6알, 밥 2공기, 맛술 1숟가락, 간장 1숟가락, 굴소스 1숟가락, 칠리갈릭 스리라차소스 2숟가락, 소금 약간, 후추 약간, 식용유 2숟가락, 달걀 2개, 마요네즈 1/2숟가락, 파슬리가루 약간
+
+-- 14번 레시피
+insert into recipe(rnum, id, subject, content, time, type, thumbnail) 
+values(recipe_seq.nextVal, 'scott', '청경채된장무침', '단돈 2천원으로 만들 수 있는 쉽고 빠른 밑반찬', 10, 3 , 'imageRecipe/pakchoiThumb.jpg');
+-- 재료 : 청경채 200g, 소금 약간, 통깨 약간, 된장 1숟가락, 고춧가루 1/2숟가락, 매실액 1/3숟가락, 다진마늘 1/2숟가락, 참기름 1/2숟가락
+
+-- 15번 레시피
+insert into recipe(rnum, id, subject, content, time, type, thumbnail) 
+values(recipe_seq.nextVal, 'scott', '가지냉국', '가지를 전자레인지에 살짝 쪄서 간단하게 만드는 가지냉국', 30, 2 , 'imageRecipe/coldeggplantsoupThumb.jpg');
+-- 재료 : 가지 2개, 오이 1/2개, 청양고추 1개, 홍고추 1개, 물 600ml, 국간장 1숟가락, 식초 3숟가락, 소금 1/3숟가락, 액젓 1/2숟가락, 국간장 1/2숟가락, 다진마늘 1/2숟가락, 매실액 1숟가락, 통깨 1숟가락
+
+-- 16번 레시피
+insert into recipe(rnum, id, subject, content, time, type, thumbnail) 
+values(recipe_seq.nextVal, 'scott', '분홍소세지조림', '달달하면서 매콤해 밥반찬으로 딱인 소세지조림', 15, 3 , 'imageRecipe/braisedsausageThumb.jpg');
+-- 재료 : 소세지 300g, 청양고추 1개, 물 1종이컵, 식용유 적당량, [양념] 고추장 1숟가락, 굴소스 1숟가락, 고춧가루 1숟가락, 올리고당 1숟가락, 다진마늘 1/2숟가락, 참기름 1/2숟가락
+
+-- 17번 레시피
+insert into recipe(rnum, id, subject, content, time, type, thumbnail) 
+values(recipe_seq.nextVal, 'scott', '망고수박빙수', '달콤함이 더 좋은 망고수박으로 시원한 망고수박빙수 만들어보세요!', 120, 6 , 'imageRecipe/mangowatermelonThumb.jpg');
+-- 재료 : 망고 수박 1/2통, 우유 1종이컵, 연유 90g, 초콜릿 또는 과자 약간
+
+-- 18번 레시피
+insert into recipe(rnum, id, subject, content, time, type, thumbnail) 
+values(recipe_seq.nextVal, 'scott', '초계김밥', '더위에 잃은 입맛을 살려줄 새콤달콤 초계김밥', 30, 1 , 'imageRecipe/vinegargimbapThumb.jpg');
+-- 재료 : 김밥용 김 2장, 현미밥 1+1/2공기, 닭가슴살통조림 1캔, 쌈무 10장, 파프리카 1/2개, 오이 1/4개, 참기름 약간, 연겨자 1숟가락, 설탕 1/2숟가락, 간장 1/2숟가락, 식초 1/2숟가락, 식초 1+1/2숟가락, 설탕 1숟가락, 소금 1/2숟가락
+
+-- 19번 레시피
+insert into recipe(rnum, id, subject, content, time, type, thumbnail) 
+values(recipe_seq.nextVal, 'scott', '양배추콥샐러드', '신선한 채소들을 한입 크기로 썰어 한끼 식사로도 좋은 샐러드 레시피', 15, 4 , 'imageRecipe/cabbagesaladThumb.jpg');
+-- 재료 : 양배추 1/6개, 라디치오 1/4개, 방울토마토 6개, 닭가슴살 1개, 삶은 달걀 2개, 블랙올리브 1/2종이컵, 아보카도 1/2개, 플레인 요거트 1개, 슈레드치즈 1/2종이컵
+
+-- 20번 레시피
+insert into recipe(rnum, id, subject, content, time, type, thumbnail) 
+values(recipe_seq.nextVal, 'scott', '두부김밥', '밥 대신 두부로 만드는 두부김밥 레시피', 10, 1 , 'imageRecipe/tofugimbapThumb.jpg');
+-- 재료 : 김 2장, 두부 2모, 노랑 파프리카 1/2개, 빨간 파프리카 1/2개, 달걀 3개, 단무지 2줄, 우엉조림 4줄, 간장 1/2숟가락, 참기름 1숟가락, 깨 약간, 소금 약간, 식용유 적당량
+
+-- 21번 레시피
+insert into recipe(rnum, id, subject, content, time, type, thumbnail) 
+values(recipe_seq.nextVal, 'scott', '틈새게티볶음밥', '두 가지 라면이 만나 이색 볶음밥으로 재탄생!', 30, 4 , 'imageRecipe/teumsaericeThumb.jpg');
+-- 재료 : 틈새 라면 1개, 짜파게티 1개, 밥 1+1/2공기, 양파 1/6개, 대파 1/2대, 체다치즈 2장, 올리브유 약간
+
+-- 22번 레시피
+insert into recipe(rnum, id, subject, content, time, type, thumbnail) 
+values(recipe_seq.nextVal, 'scott', '함박스테이크 브리또', '또띠아 속에 도톰한 함박스테이크와 볶음밥, 치즈가 한번에!', 30, 4 , 'imageRecipe/hamburgburritoThumb.jpg');
+-- 재료 : 또띠아 2장, 함박 스테이크 2개, 데미그라스 소스 2개, 마요네즈 2숟가락, 밥 1+1/2공기, 파프리카 1/4개, 양파 1/4개, 청상추 4장, 후추 약간, 체다치즈 4장, 피자치즈 2숟가락
+
+-- 23번 레시피
+insert into recipe(rnum, id, subject, content, time, type, thumbnail) 
+values(recipe_seq.nextVal, 'somi', '새우잣소스무침', '오동통한 새우로 손님맞이 고급 반찬 만들기', 20, 3 , 'imageRecipe/shrimpnutThumb.jpg');
+-- 재료 : 새우 14마리, 오이 1/2개, 밤 4알, 사과 1/4개, 청주 1숟가락, 잣 1/2종이컵, 연겨자 1/2숟가락, 설탕 1/2숟가락,소금 약간, 식초 1숟가락, 물 2숟가락
+
+-- 24번 레시피
+insert into recipe(rnum, id, subject, content, time, type, thumbnail) 
+values(recipe_seq.nextVal, 'somi', '콩나물굴국', '통통한 굴로 만드는 콩나물 굴국, 뜨끈한 굴국밥 시원하게 끓이는 법', 30, 2 , 'imageRecipe/beansproutsoupThumb.jpg');
+-- 재료 : 굴 200g, 콩나물 150g, 무 100g, 대파 1/2대, 청양고추 1개, 홍고추 1개, 다진마늘 1/2숟가락, 맛술 1숟가락, 국간장 1숟가락, 새우젓 1숟가락, 후추 약간, 멸치다시마육수 5종이컵
+
+-- 25번 레시피
+insert into recipe(rnum, id, subject, content, time, type, thumbnail) 
+values(recipe_seq.nextVal, 'somi', '애호박 오코노미야끼', '새우, 베이컨을 토핑으로 넣고 오코노미야끼소스를 잔뜩 뿌리면 야채를 안먹는 아이들도 좋아해요!', 30, 4 , 'imageRecipe/okonomiyakiThumb.jpg');
+-- 재료 : 애호박 2/3개, 양배추 약간, 칵테일새우 6마리, 베이컨 2줄, 슬라이스치즈 2장, 부침가루 1종이컵,물 1종이컵, 달걀 1개, 쪽파 3~4줄기, 오코노미야끼소스 적당량, 마요네즈 적당량, 가쓰오부시 적당량
+
+-- 26번 레시피
+insert into recipe(rnum, id, subject, content, time, type, thumbnail) 
+values(recipe_seq.nextVal, 'somi', '통마늘은행볶음', '노릇노릇 최고의 맥주 도둑, 통마늘 은행 볶음', 10, 3 , 'imageRecipe/ginkgoThumb.png');
+-- 재료 : 깐 은행 1종이컵, 마늘 15알, 버터 1/2숟가락, 소금 약간
+
+-- 27번 레시피 
+insert into recipe(rnum, id, subject, content, time, type, thumbnail) 
+values(recipe_seq.nextVal, 'somi', '된장비빔국수', '구수하고 짭짤한 맛에 감칠맛이 최고인 된장비빔국수 레시피', 15, 4 , 'imageRecipe/doenjangnoodleThumb.jpg');
+-- 재료 : 소면 1인분, 깻잎 2장, 통깨 살짝, 홍고추 1개, 된장 1숟가락, 고추장 1/2숟가락, 간장 1숟가락, 물엿 1숟가락, 설탕 1/2숟가락, 참기름 1숟가락, 다진마늘 1숟가락
+
+-- 28번 레시피
+insert into recipe(rnum, id, subject, content, time, type, thumbnail) 
+values(recipe_seq.nextVal, 'somi', '마른미역자반', '10분도 안걸리는 초간단 밑반찬 맛있는 마른 미역자반 만드는 법', 10, 3 , 'imageRecipe/driedseaweedThumb.jpg');
+-- 재료 : 마른 미역 40g, 들기름 2숟가락, 식용유 2숟가락, 설탕 1숟가락, 간 깨 1숟가락
+
+-- 29번 레시피
+insert into recipe(rnum, id, subject, content, time, type, thumbnail) 
+values(recipe_seq.nextVal, 'somi', '해물볶음짬뽕', '오늘은 흔하게 먹는 국물있는 짬뽕이 아닌 국물 없이 해물, 채소를 넣고 얼큰하게 볶은 볶음짬뽕 레시피 가져왔어요~', 30, 4 , 'imageRecipe/chinesenoodleThumb.png');
+-- 재료 : 중화면 1인분, 해물믹스 1줌, 칵테일새우 4마리, 양배추 1/8통, 청경채 2개, 홍고추1개, 양파 1/4개, 건표고버섯 1개, 대파 1/2줄, 식용유 3숟가락, 닭육수 1종이컵
+
+-- 30번 레시피
+insert into recipe(rnum, id, subject, content, time, type, thumbnail) 
+values(recipe_seq.nextVal, 'somi', '참치미역국', '고기 없이 쉽고 맛있게 미역국 끓이는 방법', 30, 2 , 'imageRecipe/tunaseaweedThumb.jpg');
+-- 재료 : 자른미역 10g, 참치통조림 1캔, 다진마늘 1숟가락, 국간장 2숟가락, 액젓 1숟가락, 들기름 1숟가락, 물 6종이컵
+
+-- 31번 레시피
+insert into recipe(rnum, id, subject, content, time, type, thumbnail) 
+values(recipe_seq.nextVal, 'somi', '깐쇼달걀', '삶은 달걀에 라이스페이퍼를 감싸서 노릇하게 굽고 매콤 달달한 양념에 버무린 다음 치즈까지~~~', 30, 3 , 'imageRecipe/ganshaoThumb.jpg');
+-- 재료 : 삶은 달걀 6개, 라이스페이퍼 6장, 체다치즈 1+1/2장, 파슬리가루 약간, 식용유 약간, 간장 1숟가락, 식초 1숟가락, 케첩 2숟가락, 고춧가루 1숟가락, 설탕 1숟가락, 물 4숟가락
+
+-- 32번 레시피
+insert into recipe(rnum, id, subject, content, time, type, thumbnail) 
+values(recipe_seq.nextVal, 'somi', '고구마치즈빵', '달달한 찐고구마와 치즈를 밀가루 반죽으로 싸고 밀어서 후라이팬에 굽기만 하면 완성!', 60, 6 , 'imageRecipe/sweetpotatoThumb.jpg');
+-- 재료 : 찐 고구마 200g, 마요네즈 2숟가락, 꿀 1숟가락, 모짜렐라 치즈 120g, 버터 2숟가락, 밀가루 강력분 100g, 우유 1/3종이컵, 녹인 버터 10g, 소금 1꼬집
+
+--33번 레시피
+insert into recipe(rnum, id, subject, content, time, type, thumbnail) 
+values(recipe_seq.nextVal, 'somi', '동태감자 오픈샌드위치', '탄,단,지 골고루 들어가 있어 든든한 한끼로 정말 좋아요!', 30, 4 , 'imageRecipe/pollacksandwichThumb.jpg');
+-- 재료 : 삶은감자 3개, 동태살 200g, 무염버터 1T, 생크림 70ml, 우유 90ml, 소금 약간, 후추 약간, 오레가노 1꼬집, 올리브오일 약간, 샐러드채소 1줌, 그라나파다노 약간, 빵 적당량
+
+-- 34번 레시피
+insert into recipe(rnum, id, subject, content, time, type, thumbnail) 
+values(recipe_seq.nextVal, 'somi', '회오리 오이무침', '오이가 스프링처럼 쭉쭉 늘어나 먹는 재미도 있고 양념이 칼집 사이사이로 잘 배어져 더욱 맛있어요!', 15, 3 , 'imageRecipe/tornadocucumberThumb.jpg');
+-- 재료 : 오이 2개, 소금 2/3숟가락, 양파 1/6개, 대파 1/4줄기, 통깨 약간, 고춧가루 3숟가락, 소금 1/4숟가락, 설탕 2/3숟가락, 매실액 1숟가락, 다진마늘 1숟가락, 식초 2숟가락, 참기름 1숟가락
+
+-- 35번 레시피
+insert into recipe(rnum, id, subject, content, time, type, thumbnail) 
+values(recipe_seq.nextVal, 'somi', '닭가슴살 시금치 스테이크', '단백질 가득 닭가슴살과 영양소 가득 시금치가 잘 어울리는 홈스토랑 메뉴', 30, 4 , 'imageRecipe/chickensteakThumb.jpg');
+-- 재료 : 닭가슴살 2덩이, 시금치 1/2단, 크림치즈 50g, 슈레드 체다치즈 2숟가락, 케이엔페퍼 약간, 소금 약간, 후추 약간, 올리브유 약간
+
+-- 36번 레시피
+insert into recipe(rnum, id, subject, content, time, type, thumbnail) 
+values(recipe_seq.nextVal, 'somi', '팽이버섯장조림', '꼬독꼬독 씹히는 맛이 너무 좋아요~ 청양고추를 빼면  달달하면서 짭짤해 아이들도 먹을 수 있어요!', 15, 3 , 'imageRecipe/enokiThumb.jpg');
+-- 재료 : 팽이버섯 600g, 양파 1/2개, 청양고추 2개, 간장 2/3종이컵, 설탕 2/3종이컵, 물 2/3종이컵
+--
+-- 37번 레시피
+insert into recipe(rnum, id, subject, content, time, type, thumbnail) 
+values(recipe_seq.nextVal, 'somi', '시나몬 큐브 프렌치 토스트', '시나몬 향이 진하게 나는 촉촉한 프렌치토스트를 커피랑 함께~', 20, 6 , 'imageRecipe/frenchtoastThumb.jpg');
+-- 재료 : 큐브식빵 or 통식빵 1개, 우유 1종이컵, 계란 3개, 설탕 1숟가락, 시나몬파우더 1/2숟가락, 소금 1꼬집, 버터 2조각, 슈가파우더 약간
+
+
+
